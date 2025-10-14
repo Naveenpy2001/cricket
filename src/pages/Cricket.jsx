@@ -2,6 +2,7 @@ import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, Settings, RotateCcw, RefreshCw, Plus, Edit3, Users, Trophy,X,Check,Clock,Target,UserPlus,Save
 } from 'lucide-react';
 import FieldSetGround from './components/FieldSetGround ';
+import CricketFieldingTracker from './FieldsTrack';
 
 
 // Toast notification system
@@ -61,7 +62,7 @@ const Modal = ({ isOpen, onClose, title, children, size = 'md' }) => {
 };
 
 const AdvancedCricketManager = () => {
-  const [gameState, setGameState] = useState('setup'); // setup, toss, playing, finished
+  const [gameState, setGameState] = useState('setup'); 
   const [toast, setToast] = useState({ message: '', type: '', visible: false });
   const [modals, setModals] = useState({
     playerManagement: false,
@@ -70,9 +71,6 @@ const AdvancedCricketManager = () => {
     matchResult: false
   });
 
-  useEffect(() => {
-  console.log("SetupScreen mounted");
-}, []);
 
 
   // Match Configuration
@@ -126,6 +124,9 @@ const AdvancedCricketManager = () => {
 });
 
 
+const [showEventForm, setShowEventForm] = useState(false);
+
+
   // Game state
   const [currentOver, setCurrentOver] = useState(1);
   const [currentBall, setCurrentBall] = useState(1);
@@ -140,6 +141,17 @@ const AdvancedCricketManager = () => {
   const [isSaved, setIsSaved] = useState(false);
   const [unsavedRuns, setUnsavedRuns] = useState('');
   const [unsavedEvent, setUnsavedEvent] = useState('');
+
+
+
+{/* Add penalty run options state */}
+const [penaltyRunOptions, setPenaltyRunOptions] = useState([
+  { type: 'wide', label: 'Wide', runs: 1 },
+  { type: 'noball', label: 'No Ball', runs: 1 },
+  { type: 'bye', label: 'Bye', runs: 1 },
+  { type: 'legbye', label: 'Leg Bye', runs: 1 },
+  { type: 'penalty', label: 'Penalty Runs', runs: 5 }
+]);
 
   // New player form
   const [newPlayer, setNewPlayer] = useState({
@@ -241,17 +253,7 @@ const AdvancedCricketManager = () => {
   };
 
   const eventTypes = [
-    { type: 'dot', label: 'Dot Ball', color: 'bg-gray-400' },
-    { type: 'single', label: 'Single', color: 'bg-blue-500' },
-    { type: 'two', label: 'Two Runs', color: 'bg-blue-600' },
-    { type: 'three', label: 'Three Runs', color: 'bg-blue-700' },
-    { type: 'four', label: 'Four', color: 'bg-green-500' },
-    { type: 'six', label: 'Six', color: 'bg-green-700' },
-    { type: 'wide', label: 'Wide', color: 'bg-yellow-400' },
-    { type: 'noball', label: 'No Ball', color: 'bg-orange-400' },
-    { type: 'bye', label: 'Bye', color: 'bg-purple-400' },
-    { type: 'legbye', label: 'Leg Bye', color: 'bg-purple-500' },
-    { type: 'wicket', label: 'Wicket', color: 'bg-red-500' }
+    
   ];
 
   const handleFielderDrag = useCallback((e, fielderId) => {
@@ -389,6 +391,9 @@ const AdvancedCricketManager = () => {
     showToast('Match completed successfully!', 'success');
   };
 
+
+  
+
   // Setup Screen Component
   const SetupScreen = () => (
     <div className="min-h-screen bg-gradient-to-br from-green-900 via-green-800 to-emerald-900 flex items-center justify-center">
@@ -503,7 +508,7 @@ const AdvancedCricketManager = () => {
           Add New Player
         </h3>
         
-        <form onSubmit={(e) => e.preventDefault()}>
+        <>
           <div className="grid grid-cols-2 gap-4">
           <input
             type="text"
@@ -591,7 +596,7 @@ const AdvancedCricketManager = () => {
           <Plus className="w-5 h-5" />
           <span>Add Player</span>
         </button>
-        </form>
+        </>
       </div>
 
       {/* Teams Display */}
@@ -801,7 +806,7 @@ const AdvancedCricketManager = () => {
           </div>
 
           {/* Over Navigation */}
-          <div className="flex items-center justify-between bg-white rounded-xl shadow-md px-6 py-4">
+          {/* <div className="flex items-center justify-between bg-white rounded-xl shadow-md px-6 py-4">
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => {
@@ -830,7 +835,64 @@ const AdvancedCricketManager = () => {
                 Required: {((matchConfig.overs * 6) || 0).toFixed(1)} RPO
               </div>
             </div>
-          </div>
+          </div> */}
+          <div className="flex items-center justify-between bg-white rounded-xl shadow-md px-6 py-4">
+  <div className="flex items-center space-x-4">
+    <button 
+      onClick={() => {
+        if (currentBall === 1 && currentOver > 1) {
+          setCurrentOver(prev => prev - 1);
+          setCurrentBall(6);
+        } else if (currentBall > 1) {
+          setCurrentBall(prev => prev - 1);
+        }
+      }} 
+      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+    >
+      <ChevronLeft className="w-6 h-6 text-blue-500" />
+    </button>
+    <span className="text-2xl font-bold text-gray-800">OVER {currentOver}.{currentBall}</span>
+    <button onClick={nextBall} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+      <ChevronRight className="w-6 h-6 text-blue-500" />
+    </button>
+  </div>
+  <div className="flex items-center space-x-6">
+    {/* Batsman Info */}
+    <div className="text-sm text-gray-600">
+      <div className="font-semibold">Striker: {striker}</div>
+      <div className="text-xs">
+        {(() => {
+          const batsman = teams.team1.players.find(p => p.displayName === striker);
+          return batsman ? `${batsman.battingType === 'left' ? 'Left-handed' : 'Right-handed'} ${batsman.role}` : '';
+        })()}
+      </div>
+    </div>
+    
+    {/* Bowler Info */}
+    <div className="text-sm text-gray-600">
+      <div className="font-semibold">Bowler: {bowler}</div>
+      <div className="text-xs">
+        {(() => {
+          const bowlerInfo = teams.team2.players.find(p => p.displayName === bowler);
+          return bowlerInfo && bowlerInfo.bowlingType ? 
+            `${bowlerInfo.bowlingType.charAt(0).toUpperCase() + bowlerInfo.bowlingType.slice(1)} ${bowlerInfo.role}` : 
+            (bowlerInfo ? bowlerInfo.role : '');
+        })()}
+      </div>
+    </div>
+    
+    <div className="h-6 w-px bg-gray-300"></div>
+    
+    {/* Match Stats */}
+    <div className="text-sm text-gray-600">
+      Run Rate: {((totalRuns / ((currentOver - 1) + (currentBall / 6))) || 0).toFixed(2)}
+    </div>
+    <div className="h-6 w-px bg-gray-300"></div>
+    <div className="text-sm text-gray-600">
+      Required: {((matchConfig.overs * 6) || 0).toFixed(1)} RPO
+    </div>
+  </div>
+</div>
         </div>
 
         {/* Main Playing Area */}
@@ -843,10 +905,10 @@ const AdvancedCricketManager = () => {
             </h3>
             
             {/* Runs Input */}
-            <div className="mb-6">
+            {/* <div className="mb-6">
               <h4 className="font-semibold mb-3 text-gray-700">Runs</h4>
               <div className="grid grid-cols-4 gap-2">
-                {[0, 1, 2, 3, 4, 5, 6].map(run => (
+                {[0, 1, 2, 3, 4, 5, 6, "?"].map(run => (
                   <button
                     key={run}
                     onClick={() => handleRunInput(run)}
@@ -865,29 +927,101 @@ const AdvancedCricketManager = () => {
                   Unsaved: {unsavedRuns} runs - Click Save to confirm
                 </div>
               )}
-            </div>
+            </div> */}
+
+            <div className="mb-6">
+  <h4 className="font-semibold mb-3 text-gray-700">Runs</h4>
+  <div className="grid grid-cols-4 gap-2">
+    {[0, 1, 2, 3, 4, 5, 6, "?"].map(run => (
+      <button
+        key={run}
+        onClick={() => run === "?" ? openModal('extraRuns') : handleRunInput(run)}
+        className={`p-3 rounded-lg font-bold transition-all duration-200 ${
+          unsavedRuns === run 
+            ? 'bg-blue-500 text-white scale-105 shadow-lg' 
+            : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+        }`}
+      >
+        {run}
+      </button>
+    ))}
+  </div>
+  {unsavedRuns !== '' && !isSaved && (
+    <div className="mt-3 text-sm text-orange-600 font-semibold bg-orange-50 p-2 rounded-lg">
+      Unsaved: {unsavedRuns} runs - Click Save to confirm
+    </div>
+  )}
+</div>
+
+
+
+{/* Add this modal for extra runs */}
+<Modal 
+  isOpen={modals.extraRuns} 
+  onClose={() => closeModal('extraRuns')} 
+  title="Extra Runs"
+  size="sm"
+>
+  <div className="space-y-4">
+    <p className="text-gray-700">Select type of extra runs:</p>
+    <div className="grid grid-cols-2 gap-2">
+      {penaltyRunOptions.map(option => (
+        <button
+          key={option.type}
+          onClick={() => {
+            handleRunInput(option.runs);
+            setUnsavedEvent(option.type);
+            setCurrentEvent(option.type);
+            closeModal('extraRuns');
+          }}
+          className="p-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-bold transition-colors"
+        >
+          {option.label} (+{option.runs})
+        </button>
+      ))}
+    </div>
+    <div className="pt-4 border-t border-gray-200">
+      <p className="text-gray-700 mb-2">Or enter custom runs:</p>
+      <div className="flex space-x-2">
+        <input
+          type="number"
+          min="1"
+          max="10"
+          placeholder="Runs"
+          className="flex-1 border border-gray-300 rounded-lg px-3 py-2"
+          onChange={(e) => {
+            const runs = parseInt(e.target.value) || 0;
+            setUnsavedRuns(runs);
+            setUnsavedEvent('penalty');
+            setCurrentEvent('penalty');
+          }}
+        />
+        <button
+          onClick={() => closeModal('extraRuns')}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+        >
+          Apply
+        </button>
+      </div>
+    </div>
+  </div>
+</Modal>
 
             {/* Events */}
             <div className="mb-6">
-              <h4 className="font-semibold mb-3 text-gray-700">Events</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {eventTypes.map(event => (
-                  <button
-                    key={event.type}
-                    onClick={() => {
-                      setCurrentEvent(event.type);
-                      setUnsavedEvent(event.type);
-                      setIsSaved(false);
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all duration-200 ${event.color} text-white ${
-                      currentEvent === event.type ? 'ring-2 ring-blue-500 scale-105' : 'hover:scale-102'
-                    }`}
-                  >
-                    {event.label}
-                  </button>
-                ))}
-              </div>
-            </div>
+  <div className="flex justify-between items-center mb-3">
+    <h4 className="font-semibold text-gray-700">Events</h4>
+    <button 
+      className="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+      onClick={() => setShowEventForm(true)}
+    >
+      Add Event
+    </button>
+  </div>
+  <div className="space-y-2 max-h-48 overflow-y-auto">
+    {/* Event items will be rendered here */}
+  </div>
+</div>
 
             <div className="space-y-3">
               <button
@@ -924,178 +1058,11 @@ const AdvancedCricketManager = () => {
             </div>
           </div>
 
-          {/* Field Diagram */}
-          {/* <div className="xl:col-span-2 bg-white rounded-xl shadow-md p-6">
-            <h3 className="font-bold text-lg mb-4 flex items-center">
-              <Settings className="w-5 h-5 mr-2 text-green-600" />
-              Field Position
-            </h3>
-            <div className="relative">
-              <svg 
-                ref={svgRef}
-                viewBox="0 0 300 300" 
-                className="w-full h-80 border-2 border-gray-300 rounded-lg cursor-crosshair bg-green-50"
-                onClick={handleBallClick}
-                onMouseMove={handleFielderMove}
-                onMouseUp={handleFielderDrop}
-                onTouchMove={handleFielderMove}
-                onTouchEnd={handleFielderDrop}
-              >
-              
-                <circle cx="150" cy="150" r="140" fill="#e5f3e5" stroke="#22c55e" strokeWidth="3" />
-                <circle cx="150" cy="150" r="80" fill="#d1f2d1" stroke="#22c55e" strokeWidth="2" strokeDasharray="5,5" />
-                
-               
-                <rect x="140" y="120" width="20" height="60" fill="#8b5a3c" stroke="#654321" strokeWidth="1" />
-                
-                
-                <circle cx="150" cy="130" r="3" fill="#000" stroke="#fff" strokeWidth="1" />
-                <circle cx="150" cy="170" r="3" fill="#000" stroke="#fff" strokeWidth="1" />
-                
-                
-                {fielders.map(fielder => (
-                  <g key={fielder.id}>
-                    <circle
-                      cx={fielder.x}
-                      cy={fielder.y}
-                      r="10"
-                      fill={fielder.color.includes('blue') ? '#1e40af' : fielder.color.includes('orange') ? '#f59e0b' : '#22c55e'}
-                      stroke="#fff"
-                      strokeWidth="2"
-                      className="cursor-move hover:opacity-80 transition-opacity"
-                      onMouseDown={(e) => handleFielderDrag(e, fielder.id)}
-                      onTouchStart={(e) => handleFielderDrag(e, fielder.id)}
-                    />
-                    <text
-                      x={fielder.x}
-                      y={fielder.y - 15}
-                      textAnchor="middle"
-                      className="text-xs fill-gray-700 pointer-events-none font-semibold"
-                    >
-                      {fielder.name.split(' ').map(n => n[0]).join('')}
-                    </text>
-                  </g>
-                ))}
-                
-               
-                {ballTrajectory && (
-                  <g>
-                    <line
-                      x1="150"
-                      y1="130"
-                      x2={ballTrajectory.x}
-                      y2={ballTrajectory.y}
-                      stroke="#f59e0b"
-                      strokeWidth="4"
-                      strokeDasharray="8,4"
-                    />
-                    <circle
-                      cx={ballTrajectory.x}
-                      cy={ballTrajectory.y}
-                      r="6"
-                      fill="#dc2626"
-                      stroke="#fff"
-                      strokeWidth="2"
-                    />
-                  </g>
-                )}
-                
-               
-                {fielderMovement && (
-                  <circle
-                    cx={fielderMovement.x}
-                    cy={fielderMovement.y}
-                    r="8"
-                    fill="none"
-                    stroke="#dc2626"
-                    strokeWidth="3"
-                    strokeDasharray="6,3"
-                  />
-                )}
-              </svg>
-            </div>
-            
-            <div className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg p-3">
-              <p>• Click on field to set ball direction</p>
-              <p>• Drag fielders to reposition them</p>
-              <p>• Select events and runs for each ball</p>
-            </div>
-          </div> */}
-
           <FieldSetGround />
 
-        
-
-
-
-          {/* Scorecard */}
-          <div className="bg-white rounded-xl shadow-md p-6 overflow-hidden">
-            <h3 className="font-bold text-lg mb-4 flex items-center">
-              <Clock className="w-5 h-5 mr-2 text-blue-600" />
-              Ball-by-Ball
-            </h3>
-            <div className="overflow-y-auto h-80">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-gray-100 sticky top-0">
-                    <th className="px-2 py-2 text-left font-semibold">#</th>
-                    <th className="px-2 py-2 text-left font-semibold">Batsman</th>
-                    <th className="px-2 py-2 text-center font-semibold">Runs</th>
-                    <th className="px-2 py-2 text-center font-semibold">Event</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.entries(overs).map(([overNum, balls]) =>
-                    balls.map((ball, ballIdx) => {
-                      const ballKey = `${overNum}.${ballIdx + 1}`;
-                      const isCurrentBall = ballKey === `${currentOver}.${currentBall}`;
-                      const isUnsaved = isCurrentBall && !isSaved && (unsavedRuns !== '' || unsavedEvent !== '');
-                      
-                      return (
-                        <tr 
-                          key={ballKey}
-                          className={`${
-                            isCurrentBall 
-                              ? 'bg-blue-100 border-l-4 border-l-blue-500' 
-                              : 'hover:bg-gray-50'
-                          } ${isUnsaved ? 'bg-orange-50' : ''} transition-colors`}
-                        >
-                          <td className="px-2 py-2 font-mono text-xs">
-                            {ballKey}
-                          </td>
-                          <td className="px-2 py-2">
-                            <span className={
-                              ball.batsman === striker ? 'bg-yellow-200 px-1 rounded' :
-                              ball.batsman === nonStriker ? 'bg-blue-200 px-1 rounded' : ''
-                            }>
-                              {isCurrentBall && !isSaved ? striker : ball.batsman}
-                            </span>
-                          </td>
-                          <td className="px-2 py-2 text-center font-bold">
-                            {isCurrentBall && !isSaved ? unsavedRuns : ball.runs}
-                          </td>
-                          <td className="px-2 py-2 text-center">
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              (isCurrentBall && !isSaved ? unsavedEvent : ball.event) === 'dot' ? 'bg-gray-400 text-white' :
-                              (isCurrentBall && !isSaved ? unsavedEvent : ball.event) === 'single' ? 'bg-blue-500 text-white' :
-                              (isCurrentBall && !isSaved ? unsavedEvent : ball.event) === 'four' ? 'bg-green-500 text-white' :
-                              (isCurrentBall && !isSaved ? unsavedEvent : ball.event) === 'six' ? 'bg-green-700 text-white' :
-                              (isCurrentBall && !isSaved ? unsavedEvent : ball.event) === 'wicket' ? 'bg-red-500 text-white' :
-                              'bg-blue-200 text-blue-800'
-                            }`}>
-                              {isCurrentBall && !isSaved ? unsavedEvent : ball.event || '-'}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </div>
       </div>
+        <CricketFieldingTracker />
     </div>
   );
 
@@ -1145,6 +1112,7 @@ const AdvancedCricketManager = () => {
           <MatchResultContent />
         </Modal>
         <Toast {...toast} onClose={hideToast} />
+        
       </>
     );
   }

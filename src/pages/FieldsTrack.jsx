@@ -37,6 +37,7 @@ function CricketFieldingTracker() {
   });
 
   const [fieldingEvents, setFieldingEvents] = useState([]);
+  const [showEventForm, setShowEventForm] = useState(false);
   const [selectedFielder, setSelectedFielder] = useState('');
   const [customFielder, setCustomFielder] = useState('');
   const [fieldingStatus, setFieldingStatus] = useState('');
@@ -59,6 +60,7 @@ function CricketFieldingTracker() {
   ];
 
   const allPlayers = [...teams.team1.players, ...teams.team2.players];
+  
 
   const handleSaveEvent = () => {
     const fielderName = selectedFielder === 'custom' ? customFielder : 
@@ -80,12 +82,13 @@ function CricketFieldingTracker() {
 
     setFieldingEvents([...fieldingEvents, newEvent]);
     
-    // Reset form
+    // Reset form and close popup
     setSelectedFielder('');
     setCustomFielder('');
     setFieldingStatus('');
     setSavedRuns(0);
     setGivenRuns(0);
+    setShowEventForm(false);
   };
 
   const handleDeleteEvent = (id) => {
@@ -107,9 +110,135 @@ function CricketFieldingTracker() {
           </div>
           
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Form Section */}
+            {/* Teams Section */}
             <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-blue-200">Add Fielding Event</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-blue-200">Teams</h2>
+              
+              <div className="space-y-6">
+                {/* Team 1 */}
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 mb-3">{teams.team1.name}</h3>
+                  <div className="space-y-2">
+                    {teams.team1.players.map(player => (
+                      <div key={player.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                        <div>
+                          <span className="font-medium text-gray-800">{player.displayName}</span>
+                          <span className="text-sm text-gray-600 ml-2">({player.role})</span>
+                        </div>
+                        <span className="text-xs bg-blue-100 text-blue-800 py-1 px-2 rounded-full">
+                          {player.bowlerType || 'N/A'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                
+                {/* Team 2 */}
+                <div>
+                  <h3 className="font-semibold text-lg text-gray-800 mb-3">{teams.team2.name}</h3>
+                  <div className="space-y-2">
+                    {teams.team2.players.map(player => (
+                      <div key={player.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                        <div>
+                          <span className="font-medium text-gray-800">{player.displayName}</span>
+                          <span className="text-sm text-gray-600 ml-2">({player.role})</span>
+                        </div>
+                        <span className="text-xs bg-blue-100 text-blue-800 py-1 px-2 rounded-full">
+                          {player.bowlerType || 'N/A'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Event List Section */}
+            <div>
+              <div className="flex justify-between items-center mb-6 pb-2 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-800">Fielding Events</h2>
+                <button 
+                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md flex items-center"
+                  onClick={() => setShowEventForm(true)}
+                >
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                  Add Event
+                </button>
+              </div>
+              
+              {fieldingEvents.length === 0 ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
+                  <svg className="mx-auto h-12 w-12 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <h3 className="mt-4 text-lg font-medium text-yellow-800">No events recorded yet</h3>
+                  <p className="mt-2 text-yellow-700">Add fielding events using the button above</p>
+                </div>
+              ) : (
+                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
+                  {fieldingEvents.map(event => (
+                    <div key={event.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold text-gray-900">{event.fielder}</h3>
+                            <span className="text-xs text-gray-500 bg-gray-100 py-1 px-2 rounded-full">
+                              {event.timestamp}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 mt-2">{event.status}</p>
+                          <div className="flex space-x-5 mt-3">
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.savedRuns > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
+                              <svg className="-ml-1 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              Saved: {event.savedRuns} runs
+                            </span>
+                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.givenRuns > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
+                              <svg className="-ml-1 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                              </svg>
+                              Given: {event.givenRuns} runs
+                            </span>
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => handleDeleteEvent(event.id)}
+                          className="ml-4 text-red-500 hover:text-red-700 transition"
+                          aria-label="Delete event"
+                        >
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Event Form Popup */}
+      {showEventForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Add Fielding Event</h2>
+                <button 
+                  onClick={() => setShowEventForm(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
               
               <div className="space-y-5">
                 <div>
@@ -201,73 +330,25 @@ function CricketFieldingTracker() {
                   </div>
                 </div>
                 
-                <button 
-                  onClick={handleSaveEvent}
-                  className="w-full bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors shadow-md"
-                >
-                  Save Event
-                </button>
+                <div className="flex space-x-3 pt-4">
+                  <button 
+                    onClick={() => setShowEventForm(false)}
+                    className="flex-1 bg-gray-300 text-gray-800 py-3 px-4 rounded-lg hover:bg-gray-400 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleSaveEvent}
+                    className="flex-1 bg-purple-600 text-white py-3 px-4 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors shadow-md"
+                  >
+                    Save Event
+                  </button>
+                </div>
               </div>
-            </div>
-            
-            {/* Event List Section */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-6 pb-2 border-b border-gray-200">Fielding Events</h2>
-              
-              {fieldingEvents.length === 0 ? (
-                <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-8 text-center">
-                  <svg className="mx-auto h-12 w-12 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <h3 className="mt-4 text-lg font-medium text-yellow-800">No events recorded yet</h3>
-                  <p className="mt-2 text-yellow-700">Add fielding events using the form on the left</p>
-                </div>
-              ) : (
-                <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2">
-                  {fieldingEvents.map(event => (
-                    <div key={event.id} className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition">
-                      <div className="flex justify-between items-start">
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold text-gray-900">{event.fielder}</h3>
-                            <span className="text-xs text-gray-500 bg-gray-100 py-1 px-2 rounded-full">
-                              {event.timestamp}
-                            </span>
-                          </div>
-                          <p className="text-gray-700 mt-2">{event.status}</p>
-                          <div className="flex space-x-5 mt-3">
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.savedRuns > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
-                              <svg className="-ml-1 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                              </svg>
-                              Saved: {event.savedRuns} runs
-                            </span>
-                            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${event.givenRuns > 0 ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800'}`}>
-                              <svg className="-ml-1 mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-                              </svg>
-                              Given: {event.givenRuns} runs
-                            </span>
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => handleDeleteEvent(event.id)}
-                          className="ml-4 text-red-500 hover:text-red-700 transition"
-                          aria-label="Delete event"
-                        >
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
